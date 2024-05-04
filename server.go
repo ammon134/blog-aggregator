@@ -16,6 +16,10 @@ type Config struct {
 // NewServer()
 func NewServer(config *Config) http.Handler {
 	mux := http.NewServeMux()
+	addRoutes(
+		mux,
+		config,
+	)
 
 	var handler http.Handler = mux
 	return handler
@@ -39,7 +43,7 @@ func run() error {
 		Handler: svr,
 	}
 
-	fmt.Printf("listening on port %s\n", config.Port)
+	fmt.Printf("listening on port %s...\n", config.Port)
 	err = httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
