@@ -10,6 +10,7 @@ func addRoutes(mux *http.ServeMux, config *Config) {
 	mux.Handle("GET /v1/err", handleError())
 
 	mux.Handle("POST /v1/users", handleUsersCreate(config))
+	mux.Handle("GET /v1/users", handleUsersGetByApiKey(config))
 }
 
 func handleReadiness() http.Handler {
