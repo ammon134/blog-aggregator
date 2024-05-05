@@ -41,7 +41,7 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 		})
 		if err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Class() == pq.ErrorClass("23") {
-				respondError(w, http.StatusBadRequest, "feed_id is not valid")
+				respondError(w, http.StatusBadRequest, "invalid feed_id format")
 				return
 			}
 			respondError(w, http.StatusInternalServerError, err.Error())
@@ -53,5 +53,45 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 		feedFollow := FeedFollow(dbFeedFollow)
 
 		respondJSON(w, http.StatusCreated, feedFollow)
+	})
+}
+
+func handleFeedFollowsDelete(config *Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		feedFollowIDStr := r.PathValue("feedFollowID")
+		feedFollowID := &uuid.UUID{}
+		err := feedFollowID.UnmarshalText([]byte(feedFollowIDStr))
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "invalid feed_follow_id format")
+			return
+		}
+
+		user := r.Context().Value(AuthDBUser).(*database.User)
+
+		err = config.DB.DeleteFeedFollow(r.Context(), database.DeleteFeedFollowParams{
+			ID:     *feedFollowID,
+			UserID: user.ID,
+		})
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		respondJSON(w, http.StatusOK, http.StatusText(http.StatusOK))
+	})
+}
+
+func handleFeedFollowsListByUserID(config *Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(AuthDBUser).(*database.User)
+		dbFeedFollows, err := config.DB.ListFeedFollowsByUserId(r.Context(), user.ID)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		feedFollows := []FeedFollow{}
+		for _, f := range dbFeedFollows {
+			feedFollows = append(feedFollows, FeedFollow(f))
+		}
+		respondJSON(w, http.StatusOK, feedFollows)
 	})
 }
