@@ -10,22 +10,6 @@ func addRoutes(mux *http.ServeMux, config *Config) {
 	mux.Handle("GET /v1/err", handleError())
 
 	mux.Handle("POST /v1/users", handleUsersCreate(config))
-	mux.Handle("GET /v1/users", handleUsersGetByApiKey(config))
-}
+	mux.Handle("GET /v1/users", config.middlewareIsAuthed(handleUsersGet()))
 
-func handleReadiness() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		type StatusMsg struct {
-			Status string `json:"status"`
-		}
-		respondJSON(w, http.StatusOK, StatusMsg{
-			Status: http.StatusText(http.StatusOK),
-		})
-	})
-}
-
-func handleError() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		respondError(w, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
-	})
 }

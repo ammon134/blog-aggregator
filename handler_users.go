@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ammon134/blog-aggregator/internal/auth"
 	"github.com/ammon134/blog-aggregator/internal/database"
 	"github.com/google/uuid"
 )
@@ -13,8 +12,8 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Name      string    `json:"name"`
-	ID        uuid.UUID `json:"id"`
 	APIKey    string    `json:"api_key"`
+	ID        uuid.UUID `json:"id"`
 }
 
 func handleUsersCreate(config *Config) http.Handler {
@@ -49,19 +48,11 @@ func handleUsersCreate(config *Config) http.Handler {
 	})
 }
 
-func handleUsersGetByApiKey(config *Config) http.Handler {
+func handleUsersGet() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Parse authorization key
-		apikey, err := auth.GetAuthToken(r.Header, auth.AuthTypeAPIKey)
-		if err != nil {
-			respondError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// GetUserByApiKey
-		user, err := config.DB.GetUserByApiKey(r.Context(), apikey)
-		if err != nil {
-			respondError(w, http.StatusNotFound, err.Error())
+		user, ok := r.Context().Value(AuthDBUser).(*database.User)
+		if !ok {
+			respondError(w, http.StatusBadRequest, "user not found")
 			return
 		}
 
@@ -69,7 +60,7 @@ func handleUsersGetByApiKey(config *Config) http.Handler {
 			User `json:"user"`
 		}
 		respondJSON(w, http.StatusOK, response{
-			User: createResponseUser(user),
+			User: createResponseUser(*user),
 		})
 	})
 }

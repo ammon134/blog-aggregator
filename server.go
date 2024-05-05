@@ -12,8 +12,8 @@ import (
 )
 
 type Config struct {
-	Port string
 	DB   *database.Queries
+	Port string
 }
 
 // NewServer()
