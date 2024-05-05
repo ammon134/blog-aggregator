@@ -14,4 +14,6 @@ func addRoutes(mux *http.ServeMux, config *Config) {
 
 	mux.Handle("POST /v1/feeds", config.middlewareIsAuthed(handleFeedsCreate(config)))
 	mux.Handle("GET /v1/feeds", handleFeedsList(config))
+
+	mux.Handle("POST /v1/feed_follows", config.middlewareIsAuthed(handleFeedFollowsCreate(config)))
 }
