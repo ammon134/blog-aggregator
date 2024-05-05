@@ -4,10 +4,10 @@ import "net/http"
 
 func handleReadiness() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		type StatusMsg struct {
+		type statusMsg struct {
 			Status string `json:"status"`
 		}
-		respondJSON(w, http.StatusOK, StatusMsg{
+		respondJSON(w, http.StatusOK, statusMsg{
 			Status: http.StatusText(http.StatusOK),
 		})
 	})

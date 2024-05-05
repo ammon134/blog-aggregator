@@ -21,11 +21,11 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(AuthDBUser).(*database.User)
 
-		type Parameters struct {
+		type parameters struct {
 			FeedID uuid.UUID `json:"feed_id"`
 		}
 
-		params := &Parameters{}
+		params := &parameters{}
 		err := decode(r, params)
 		if err != nil {
 			respondError(w, http.StatusBadRequest, "missing parameters")
@@ -49,7 +49,7 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 		}
 
 		// NOTE: this only works because database.FeedFollow and FeedFollow
-		// have the exact same structure
+		// have the exact same structure.
 		feedFollow := FeedFollow(dbFeedFollow)
 
 		respondJSON(w, http.StatusCreated, feedFollow)
@@ -88,10 +88,12 @@ func handleFeedFollowsListByUserID(config *Config) http.Handler {
 			respondError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		feedFollows := []FeedFollow{}
-		for _, f := range dbFeedFollows {
-			feedFollows = append(feedFollows, FeedFollow(f))
+
+		feedFollows := make([]FeedFollow, len(dbFeedFollows))
+		for i, f := range dbFeedFollows {
+			feedFollows[i] = FeedFollow(f)
 		}
+
 		respondJSON(w, http.StatusOK, feedFollows)
 	})
 }

@@ -18,10 +18,10 @@ type User struct {
 
 func handleUsersCreate(config *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		type Parameters struct {
+		type parameters struct {
 			Name string
 		}
-		params := &Parameters{}
+		params := &parameters{}
 		err := decode(r, params)
 		if err != nil {
 			respondError(w, http.StatusBadRequest, err.Error())

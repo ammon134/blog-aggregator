@@ -21,21 +21,20 @@ func handleFeedsCreate(config *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(AuthDBUser).(*database.User)
 
-		type Parameters struct {
+		type parameters struct {
 			Name string `json:"name"`
 			Url  string `json:"url"`
 		}
 
-		params := &Parameters{}
+		params := &parameters{}
 		err := decode(r, params)
 		if err != nil {
 			respondError(w, http.StatusBadRequest, "missing parameters")
 			return
 		}
 
-		newFeedID := uuid.New()
 		dbFeed, err := config.DB.CreateFeed(r.Context(), database.CreateFeedParams{
-			ID:        newFeedID,
+			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 			Name:      params.Name,
@@ -52,7 +51,7 @@ func handleFeedsCreate(config *Config) http.Handler {
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 			UserID:    user.ID,
-			FeedID:    newFeedID,
+			FeedID:    dbFeed.ID,
 		})
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, err.Error())
@@ -60,16 +59,17 @@ func handleFeedsCreate(config *Config) http.Handler {
 		}
 
 		// NOTE: this only works because database.Feed and Feed
-		// have the exact same structure
+		// have the exact same structure. Create helper func otherwise.
+		// See handler_users.go
 		feed := Feed(dbFeed)
 		feedFollow := FeedFollow(dbFeedFollow)
 
-		type Response struct {
+		type response struct {
 			Feed       Feed       `json:"feed"`
 			FeedFollow FeedFollow `json:"feed_follow"`
 		}
 
-		respondJSON(w, http.StatusCreated, Response{
+		respondJSON(w, http.StatusCreated, response{
 			Feed:       feed,
 			FeedFollow: feedFollow,
 		})
@@ -83,9 +83,10 @@ func handleFeedsList(config *Config) http.Handler {
 			respondError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		feeds := []Feed{}
-		for _, dbFeed := range dbFeeds {
-			feeds = append(feeds, Feed(dbFeed))
+
+		feeds := make([]Feed, len(dbFeeds))
+		for i, dbFeed := range dbFeeds {
+			feeds[i] = Feed(dbFeed)
 		}
 
 		respondJSON(w, http.StatusOK, feeds)
