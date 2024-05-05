@@ -33,8 +33,9 @@ func handleFeedsCreate(config *Config) http.Handler {
 			return
 		}
 
+		newFeedID := uuid.New()
 		dbFeed, err := config.DB.CreateFeed(r.Context(), database.CreateFeedParams{
-			ID:        uuid.New(),
+			ID:        newFeedID,
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 			Name:      params.Name,
@@ -46,11 +47,32 @@ func handleFeedsCreate(config *Config) http.Handler {
 			return
 		}
 
+		dbFeedFollow, err := config.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			UserID:    user.ID,
+			FeedID:    newFeedID,
+		})
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		// NOTE: this only works because database.Feed and Feed
 		// have the exact same structure
 		feed := Feed(dbFeed)
+		feedFollow := FeedFollow(dbFeedFollow)
 
-		respondJSON(w, http.StatusCreated, feed)
+		type Response struct {
+			Feed       Feed       `json:"feed"`
+			FeedFollow FeedFollow `json:"feed_follow"`
+		}
+
+		respondJSON(w, http.StatusCreated, Response{
+			Feed:       feed,
+			FeedFollow: feedFollow,
+		})
 	})
 }
 
