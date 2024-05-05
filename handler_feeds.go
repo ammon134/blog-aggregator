@@ -53,3 +53,19 @@ func handleFeedsCreate(config *Config) http.Handler {
 		respondJSON(w, http.StatusCreated, feed)
 	})
 }
+
+func handleFeedsList(config *Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dbFeeds, err := config.DB.ListFeeds(r.Context())
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		feeds := []Feed{}
+		for _, dbFeed := range dbFeeds {
+			feeds = append(feeds, Feed(dbFeed))
+		}
+
+		respondJSON(w, http.StatusOK, feeds)
+	})
+}
