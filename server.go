@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ammon134/blog-aggregator/internal/database"
 	"github.com/joho/godotenv"
@@ -63,6 +64,8 @@ func run() error {
 		Addr:    ":" + config.Port,
 		Handler: svr,
 	}
+
+	go runScrapingWorker(config, 10, time.Second*60)
 
 	fmt.Printf("listening on port %s...\n", config.Port)
 	err = httpServer.ListenAndServe()

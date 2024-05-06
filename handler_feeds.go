@@ -9,12 +9,13 @@ import (
 )
 
 type Feed struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Name      string    `json:"name"`
-	Url       string    `json:"url"`
-	UserID    uuid.UUID `json:"user_id"`
+	ID          uuid.UUID  `json:"id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	Name        string     `json:"name"`
+	Url         string     `json:"url"`
+	UserID      uuid.UUID  `json:"user_id"`
+	LastFetchAt *time.Time `json:"last_fetch_at"`
 }
 
 func handleFeedsCreate(config *Config) http.Handler {
@@ -61,7 +62,7 @@ func handleFeedsCreate(config *Config) http.Handler {
 		// NOTE: this only works because database.Feed and Feed
 		// have the exact same structure. Create helper func otherwise.
 		// See handler_users.go
-		feed := Feed(dbFeed)
+		feed := createResponseFeed(dbFeed)
 		feedFollow := FeedFollow(dbFeedFollow)
 
 		type response struct {
@@ -84,11 +85,27 @@ func handleFeedsList(config *Config) http.Handler {
 			return
 		}
 
-		feeds := make([]Feed, len(dbFeeds))
-		for i, dbFeed := range dbFeeds {
-			feeds[i] = Feed(dbFeed)
-		}
-
+		feeds := createResponseFeedList(dbFeeds)
 		respondJSON(w, http.StatusOK, feeds)
 	})
+}
+
+// Helper functions
+func createResponseFeed(dbFeed database.Feed) Feed {
+	return Feed{
+		ID:        dbFeed.ID,
+		CreatedAt: dbFeed.CreatedAt,
+		UpdatedAt: dbFeed.UpdatedAt,
+		Name:      dbFeed.Name,
+		Url:       dbFeed.Url,
+		UserID:    dbFeed.UserID,
+	}
+}
+
+func createResponseFeedList(dbFeeds []database.Feed) []Feed {
+	feeds := make([]Feed, len(dbFeeds))
+	for i, dbFeed := range dbFeeds {
+		feeds[i] = createResponseFeed(dbFeed)
+	}
+	return feeds
 }
