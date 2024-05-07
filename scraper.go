@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"io"
 	"log"
@@ -10,6 +11,8 @@ import (
 	"time"
 
 	"github.com/ammon134/blog-aggregator/internal/database"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const (
@@ -100,6 +103,7 @@ func runScrapingWorker(config *Config, batchSize int, interval time.Duration) {
 			continue
 		}
 		log.Printf("Processing %d feeds...\n", len(feeds))
+
 		var wg sync.WaitGroup
 		for _, f := range feeds {
 			wg.Add(1)
@@ -118,10 +122,43 @@ func runScrapingWorker(config *Config, batchSize int, interval time.Duration) {
 				}
 
 				for _, p := range rss.Channel.Item {
-					log.Printf("Processed post: %s\n", p.Title)
+					post, err := savePostToDB(ctx, config.DB, f, p)
+					if err != nil {
+						if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == database.ErrConstraintUnique {
+							continue
+						}
+						log.Printf("error saving post to DB: %s\n", err.Error())
+						continue
+					}
+					log.Printf("Processed post: %s\n", post.Title)
 				}
 			}(f)
 		}
 		wg.Wait()
 	}
+}
+
+func savePostToDB(ctx context.Context, q *database.Queries, f database.Feed, p Item) (database.Post, error) {
+	pubDate, err := time.Parse(time.RFC1123Z, p.PubDate)
+	if err != nil {
+		return database.Post{}, err
+	}
+	description := sql.NullString{String: p.Description, Valid: true}
+	if p.Description == "" {
+		description.Valid = false
+	}
+	post, err := q.CreatePost(ctx, database.CreatePostParams{
+		ID:          uuid.New(),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+		Title:       p.Title,
+		Url:         p.Link,
+		Description: description,
+		PublishedAt: pubDate,
+		FeedID:      f.ID,
+	})
+	if err != nil {
+		return database.Post{}, err
+	}
+	return post, nil
 }

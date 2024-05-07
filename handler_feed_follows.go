@@ -40,7 +40,7 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 			FeedID:    params.FeedID,
 		})
 		if err != nil {
-			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Class() == pq.ErrorClass("23") {
+			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == database.ErrConstraintUnique {
 				respondError(w, http.StatusBadRequest, "invalid feed_id format")
 				return
 			}
