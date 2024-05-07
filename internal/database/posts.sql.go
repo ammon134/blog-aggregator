@@ -56,3 +56,48 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 	return i, err
 }
 
+const listPostsByUserID = `-- name: ListPostsByUserID :many
+SELECT id, created_at, updated_at, title, url, description, published_at, feed_id FROM posts
+WHERE feed_id IN (
+  SELECT id FROM feeds
+  WHERE user_id = $1
+)
+LIMIT $2
+`
+
+type ListPostsByUserIDParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
+
+func (q *Queries) ListPostsByUserID(ctx context.Context, arg ListPostsByUserIDParams) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, listPostsByUserID, arg.UserID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Post
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.PublishedAt,
+			&i.FeedID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
