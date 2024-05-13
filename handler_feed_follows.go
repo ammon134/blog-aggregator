@@ -17,7 +17,7 @@ type FeedFollow struct {
 	FeedID    uuid.UUID `json:"feed_id"`
 }
 
-func handleFeedFollowsCreate(config *Config) http.Handler {
+func handleFeedFollowsCreate(c *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(AuthDBUser).(*database.User)
 
@@ -32,7 +32,7 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 			return
 		}
 
-		dbFeedFollow, err := config.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+		dbFeedFollow, err := c.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -56,7 +56,7 @@ func handleFeedFollowsCreate(config *Config) http.Handler {
 	})
 }
 
-func handleFeedFollowsDelete(config *Config) http.Handler {
+func handleFeedFollowsDelete(c *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		feedFollowIDStr := r.PathValue("feedFollowID")
 		feedFollowID := &uuid.UUID{}
@@ -68,7 +68,7 @@ func handleFeedFollowsDelete(config *Config) http.Handler {
 
 		user := r.Context().Value(AuthDBUser).(*database.User)
 
-		err = config.DB.DeleteFeedFollow(r.Context(), database.DeleteFeedFollowParams{
+		err = c.DB.DeleteFeedFollow(r.Context(), database.DeleteFeedFollowParams{
 			ID:     *feedFollowID,
 			UserID: user.ID,
 		})
@@ -80,10 +80,10 @@ func handleFeedFollowsDelete(config *Config) http.Handler {
 	})
 }
 
-func handleFeedFollowsListByUserID(config *Config) http.Handler {
+func handleFeedFollowsListByUserID(c *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(AuthDBUser).(*database.User)
-		dbFeedFollows, err := config.DB.ListFeedFollowsByUserId(r.Context(), user.ID)
+		dbFeedFollows, err := c.DB.ListFeedFollowsByUserId(r.Context(), user.ID)
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, err.Error())
 			return

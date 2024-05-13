@@ -16,7 +16,7 @@ type User struct {
 	ID        uuid.UUID `json:"id"`
 }
 
-func handleUsersCreate(config *Config) http.Handler {
+func handleUsersCreate(c *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		type parameters struct {
 			Name string
@@ -28,7 +28,7 @@ func handleUsersCreate(config *Config) http.Handler {
 			return
 		}
 
-		user, err := config.DB.CreateUser(r.Context(), database.CreateUserParams{
+		user, err := c.DB.CreateUser(r.Context(), database.CreateUserParams{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),

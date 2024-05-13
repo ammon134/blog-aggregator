@@ -50,26 +50,26 @@ func handlePostsListByUserId(c *Config) http.Handler {
 }
 
 // Helper functions
-func createResponsePost(dbPost database.Post) Post {
+func createResponsePost(dp database.Post) Post {
 	description := ""
-	if dbPost.Description.Valid {
-		description = dbPost.Description.String
+	if dp.Description.Valid {
+		description = dp.Description.String
 	}
 	return Post{
-		ID:          dbPost.ID,
-		CreatedAt:   dbPost.CreatedAt,
-		UpdatedAt:   dbPost.UpdatedAt,
-		Title:       dbPost.Title,
-		Url:         dbPost.Url,
+		ID:          dp.ID,
+		CreatedAt:   dp.CreatedAt,
+		UpdatedAt:   dp.UpdatedAt,
+		Title:       dp.Title,
+		Url:         dp.Url,
 		Description: description,
-		PublishedAt: dbPost.PublishedAt,
-		FeedID:      dbPost.FeedID,
+		PublishedAt: dp.PublishedAt,
+		FeedID:      dp.FeedID,
 	}
 }
 
-func createResponsePostList(dbPosts []database.Post) []Post {
-	posts := make([]Post, len(dbPosts))
-	for i, p := range dbPosts {
+func createResponsePostList(dps []database.Post) []Post {
+	posts := make([]Post, len(dps))
+	for i, p := range dps {
 		posts[i] = createResponsePost(p)
 	}
 	return posts

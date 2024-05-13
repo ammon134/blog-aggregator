@@ -18,7 +18,7 @@ type Feed struct {
 	LastFetchAt *time.Time `json:"last_fetch_at"`
 }
 
-func handleFeedsCreate(config *Config) http.Handler {
+func handleFeedsCreate(c *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(AuthDBUser).(*database.User)
 
@@ -34,7 +34,7 @@ func handleFeedsCreate(config *Config) http.Handler {
 			return
 		}
 
-		dbFeed, err := config.DB.CreateFeed(r.Context(), database.CreateFeedParams{
+		dbFeed, err := c.DB.CreateFeed(r.Context(), database.CreateFeedParams{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -47,7 +47,7 @@ func handleFeedsCreate(config *Config) http.Handler {
 			return
 		}
 
-		dbFeedFollow, err := config.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+		dbFeedFollow, err := c.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
 			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
@@ -77,9 +77,9 @@ func handleFeedsCreate(config *Config) http.Handler {
 	})
 }
 
-func handleFeedsList(config *Config) http.Handler {
+func handleFeedsList(c *Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		dbFeeds, err := config.DB.ListFeeds(r.Context())
+		dbFeeds, err := c.DB.ListFeeds(r.Context())
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -91,20 +91,20 @@ func handleFeedsList(config *Config) http.Handler {
 }
 
 // Helper functions
-func createResponseFeed(dbFeed database.Feed) Feed {
+func createResponseFeed(df database.Feed) Feed {
 	return Feed{
-		ID:        dbFeed.ID,
-		CreatedAt: dbFeed.CreatedAt,
-		UpdatedAt: dbFeed.UpdatedAt,
-		Name:      dbFeed.Name,
-		Url:       dbFeed.Url,
-		UserID:    dbFeed.UserID,
+		ID:        df.ID,
+		CreatedAt: df.CreatedAt,
+		UpdatedAt: df.UpdatedAt,
+		Name:      df.Name,
+		Url:       df.Url,
+		UserID:    df.UserID,
 	}
 }
 
-func createResponseFeedList(dbFeeds []database.Feed) []Feed {
-	feeds := make([]Feed, len(dbFeeds))
-	for i, dbFeed := range dbFeeds {
+func createResponseFeedList(dfs []database.Feed) []Feed {
+	feeds := make([]Feed, len(dfs))
+	for i, dbFeed := range dfs {
 		feeds[i] = createResponseFeed(dbFeed)
 	}
 	return feeds
