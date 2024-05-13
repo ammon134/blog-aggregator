@@ -9,6 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	QueryDefaultLimit = 20
+)
+
 type Post struct {
 	ID          uuid.UUID `json:"id"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -26,7 +30,7 @@ func handlePostsListByUserId(c *Config) http.Handler {
 
 		params := &database.ListPostsByUserIDParams{
 			UserID: user.ID,
-			Limit:  int32(20),
+			Limit:  int32(QueryDefaultLimit),
 		}
 		limitStr := r.URL.Query().Get("limit")
 		if limitStr != "" {
