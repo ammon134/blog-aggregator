@@ -15,4 +15,3 @@ ORDER BY created_at DESC;
 -- name: GetFeedFollowByUserIdFeedID :one
 SELECT * FROM feed_follows
 WHERE user_id = $1 AND feed_id = $2;
-

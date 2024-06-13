@@ -54,7 +54,7 @@ func run() error {
 	dbQueries := database.New(db)
 
 	config := &Config{
-		Port: os.Getenv("PORT"),
+		Port: port,
 		DB:   dbQueries,
 	}
 
